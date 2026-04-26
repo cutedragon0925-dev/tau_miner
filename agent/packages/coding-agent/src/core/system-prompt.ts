@@ -177,21 +177,25 @@ function buildTaskDiscoverySection(taskText: string, cwd: string): string {
 			}
 		} catch { }
 
-		// Phase 2: for each candidate file, determine which keywords it contains.
-		// One grep per file (with all patterns) instead of one grep per keyword.
+		// Phase 2: one multi-pattern grep per file to get keyword attribution.
+		// Uses grep -ohF with all patterns at once — O(files) calls instead of O(files×keywords).
 		const fileHits = new Map<string, Set<string>>();
+		const filteredSet = new Set(filtered);
 		for (const file of candidateFiles) {
-			const hits = new Set<string>();
-			for (const kw of filtered) {
-				try {
-					execSync(
-						`grep -qF "${shellEscape(kw)}" "${shellEscape(file)}" 2>/dev/null`,
-						{ cwd, timeout: 500, encoding: "utf-8" },
+			if (!file) continue;
+			try {
+				const pats = filtered.map(kw => `-e "${shellEscape(kw)}"`).join(" ");
+				const out = execSync(
+					`grep -ohF ${pats} "${shellEscape(file)}" 2>/dev/null | sort -u`,
+					{ cwd, timeout: 2000, encoding: "utf-8", maxBuffer: 512 * 1024 },
+				).trim();
+				if (out) {
+					const matched = new Set(
+						out.split("\n").map(l => l.trim()).filter(m => filteredSet.has(m)),
 					);
-					hits.add(kw);
-				} catch { }
-			}
-			if (hits.size > 0) fileHits.set(file, hits);
+					if (matched.size > 0) fileHits.set(file, matched);
+				}
+			} catch { }
 		}
 
 		// Filename-based hits (unchanged from peak001)
@@ -458,10 +462,6 @@ No semantic bonus. No tests in scoring.
 **Empty patches (zero files changed) score worst** when the task asks for any implementation — treat a non-empty diff as a first-class objective alongside correctness.
 
 # Diff Overlap Optimizer
-
-Your diff is scored against a hidden reference diff for the same task.
-Harness details vary, but overlap scoring rewards matching changed lines/ordering and penalizes surplus edits.
-No semantic bonus. No tests in scoring.
 
 ## Hard constraints
 

@@ -29,6 +29,7 @@ Two loss modes:
 - **Minimal change is the primary objective.** Omit anything not literally required by the task.
 - **Character-identical style.** Copy indentation type and width, quote style, semicolons, trailing commas, brace placement, blank-line patterns exactly from surrounding code.
 - **Do not touch what was not asked.** No comment edits, import reordering, formatting fixes, whitespace cleanup, or unrelated bug fixes.
+- **No padding.** Do not add blank lines, JSDoc, type annotations, or defensive checks that are not in the surrounding code pattern.
 - **No new files** unless the task literally says "create a file." When creating one, place it alongside sibling files, not at the repo root.
 - **No exploratory reads.** Do not read README, package.json, tsconfig, or test files unless the task names them. Do not run directory scans beyond locating a named file.
 - **No re-reading.** Once you have read a file, do not read it again unless an edit failed. Re-reading the same file wastes time better spent on the next target.
@@ -36,6 +37,7 @@ Two loss modes:
 - **No git operations.** The harness captures your diff automatically.
 - **Alphabetical file order.** When editing multiple files, process in alphabetical path order. Within each file, edit top-to-bottom. This stabilizes diff position alignment.
 - **Sibling registration patterns.** If the task adds a page, API route, nav link, or config key, mirror how existing entries are shaped and ordered in that file (do not invent a new layout).
+- **Import chain check.** When adding a new export, check if a barrel/index file re-exports from that module — add the re-export only when existing neighbors do the same.
 
 ## Edit Rules
 
